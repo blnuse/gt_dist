@@ -1,0 +1,77 @@
+####  JAGS  ####  JAGS  ####  JAGS  ####  JAGS  ####  JAGS  ####  JAGS  ####  JAGS
+##
+########  Royle & Dorazio Bayesian Distance Analysis, from their book.
+##
+##
+####  begun 29 Dec 2014.
+################################################
+
+
+model {
+
+###  Priors:
+
+###  Top level
+
+     # sigma.mn ~ dunif(0, 100)
+     # sigma.sd ~ dunif(0, 50)
+
+# sigma ~ dunif(0,50)
+sigma ~ dunif(0,100)
+
+     # xi.int.mn ~ dunif(0, 1)
+     # xi.int.sd ~ dunif(0,5)
+
+     # xi.break.mn ~ dunif(0, 1)
+     # xi.break.sd ~ dunif(0,5)     
+
+
+psi ~ dunif(0, 1)
+
+     # sigma ~ dnorm(sigma.mn, 1/sigma.sd^2)T(0,100)
+
+     # xi.int ~ dnorm(xi.int.mn, 1/xi.int.sd^2)T(0,1)
+     # xi.break ~ dnorm(xi.break.mn, 1/xi.break.sd^2)T(0,1)
+     # xi.beta1 <- (1 - xi.int)/xi.break          ## this is for when xi ~ diameter (first-order)
+
+#xi.50 ~ dunif(0,1)
+#xi.break ~ dunif(50,max.diam)
+## xi.beta.sq <- (1 - xi.int)/xi.break^2          ## this is for when xi ~ (diameter)^2
+#xi.beta <- (1 - xi.50)/(xi.break-50)               ## where xi ~ diameter
+     
+     ###  Likelihood:
+          for (i in 1:M) {                         ##  iterate over burrows (observed + unobserved + rows for prediction)
+            diam[i] ~ dunif(50,max.diam)
+            
+            w[i] ~ dbern(psi)
+            x[i] ~ dunif(0, Bx)
+
+#            xi[i] <- ifelse(diam[i] < xi.break,
+#                                xi.50 + xi.beta*(diam[i]-50),
+#                                1)
+
+            p[i] <- exp(-((x[i]^2)/(2*sigma^2)))
+            mu[i] <- w[i] * p[i]
+            Y[i] ~ dbern(mu[i])
+
+            for (j in 1:(length(bin.floor)-1)) {
+              bin.vect[i,j] <- ifelse(diam[i] >= bin.floor[j] && diam[i] < bin.floor[j+1], 1, 0)
+            }
+
+          }
+
+          
+###  Derived:
+for (j in 1:(length(bin.floor)-1)) {
+  bin.ct[j] <- w %*% bin.vect[,j]
+}
+
+N <- sum(w)  ## M+P
+
+N.tot <- (A.tot/A.samp)*N
+
+# diam.mn <- diam.a/(diam.a + diam.b)
+
+# diam.sd <- sqrt(diam.a * diam.b/((diam.a+diam.b)^2 * (diam.a+diam.b+1)))
+
+}

@@ -1,0 +1,167 @@
+##  Using the GT population simulator, version 1.0
+##
+##
+##  08 Jan 2018, BLN
+#####################################
+
+First, source() the file "new_sim_09jul2019".
+
+This loads the top-level function sim(), and its antecedents.
+
+
+______________________________________________________________________________
+
+burrSim
+
+Top-level function, to generate a set of burrows each possessing a diameter and location in a simulated landscape.  Transects guide a "survey" of these burrows, conducted according to a (possibly diameter-dependent) detection function.  Burrows are thus granted a detection probability, and, after the "survey", an indication of whether each was "found". 
+
+burrSim (intrvl, sigma, mult, n.burr = NULL, edge = 1000, theta = 50, 
+    xi.50 = 1, xi.brk = 50, xi.sq = FALSE, tau.50 = 1, tau.brk = 50, 
+    tau.sq = FALSE, plot = FALSE, ...) 
+
+
+ARGUMENTS
+
+intrvl  -- spacing between transects, in map units
+
+mult    -- multiplier value, > 0.  What exactly this means depends on the method used to generate burrow diameters (see "method" below).  In "well-known" mode, the "mult" factor is simply multiplied by the relative abundances in the "rel.abund" argument to ind.sz.lst(); .  In "stable-age" mode, "mult" will be the number of hatchlings.
+
+n.burr  -- NULL by default, this argument allows one to limit the total number of burrows.  Passing a value here that is greater than the number of burrows generated results in a warning and use of all the generated burrows.
+
+edge    -- the surveyed area is a square; "edge" is the side length in map units.
+
+theta   -- the 'pitch' of the transects, i.e., their angle relative to the x-axis.
+
+
+#####  Detection parameters  #####
+
+sigma   -- scale parameter of the half-normal detection function
+
+xi.50   -- one of two hyper-parameters of the "xi" parameter of the detection function, that together describe a broken-stick regression function defining the response of xi to burrow diameter.  "xi.50" is the value the function takes for the burrow of a newly-hatched tortoise, defined as having diameter 50mm.  (This takes the place of the function's y-intercept.)
+
+xi.brk  -- second of the hyper-parameters of xi: the diameter in millimeters at and above which the function takes a value of 1.
+
+xi.sq   -- should the ascending portion of xi's broken stick function take a quadratic (concave-up) shape?
+
+tau.50   -- one of two hyper-parameters of the "tau" parameter of the detection function, that together describe a broken-stick regression function defining the response of tau to burrow diameter.  "tau.50" is the value the function takes for the burrow of a newly-hatched tortoise, defined as having diameter 50mm.  (This takes the place of the function's y-intercept.)
+
+tau.brk  -- second of the hyper-parameters of tau: the diameter in millimeters at and above which the function takes a value of 1.
+
+tau.sq   -- should the ascending portion of tau's broken stick function take a quadratic (concave-up) shape?
+
+plot     -- should a picture be made, of the surveyed area?
+
+...      -- other arguments passed to functions called by sim().  If mode "stable-age" is used, the following are required here, at a minimum: S.juv, S.subad, S.ad, F.
+
+
+DETAILS
+
+Function sim() makes a call to ind.sz.lst() described below.  There are two modes of operation, controlled by the "method=" argument to ind.sz.lst().  In "well-known" mode, the basic approach is to multiply a vector of relative abundances within a set of size classes (argument "rel.abund", of ind.sz.lst()) by the "mult=" argument of sim().  In "stable-age" mode, the vector of relative abundances is genereated from a stable-age distribution.  Much more information is required for the latter approach.  In particular values for annual survival of juveniles, subadults and adults, as well as per capita fecundity, have no default values, and must be supplied to ind.sz.lst() (and subsequently stable.age()) via "...".  
+
+
+VALUE
+
+A list containing all the relevant survey details, including the dataframe "all.burr", in which column "diam" gives the burrow diameter; "trans" is the identifier of the nearest transect to the burrow; "dist" is the minimum distance to that transect; "p" the individual probability of detection; and "found" whether the simulated surveyor discovered each burrow (1 = found).
+
+
+EXAMPLE
+
+s <- burrSim(method="stable-age", S.juv = 0.7, S.subad = 0.85, S.ad = 0.95, F = 4, lambda = 0.94, mult = 20, sigma = 30, intrvl = 100, xi.brk = 300, xi.50 = 0.1)
+hist(s$all.burr$diam[s$all.burr$found == 1]) 
+
+______________________________________________________________________________
+
+ind.sz.lst
+
+Generate burrows in a population of gopher tortoises, according to a stable-age distribution, or a vector of relative abundances in a set of size classes.
+
+ind.sz.lst (mult, method = "well-known", bin.width = 50, rel.abund = c(0, 
+    1, 0.3, 0.25, 0.2, 0.15, 0.3, 0.4, 0.1), ...) 
+
+
+ARGUMENTS
+
+mult  -- The numeric factor multiplied by the vector of relative abundances in the size classes defined by bin.width.
+
+method  -- There are two basic ways to use the simulator: "well-known" mode, and "stable-age".  If "well-known", then the vector of relative abundances in each of the size classes is simply taken from the rel.abund argument.  If the "stable-age" mode is used, then these relative abundances are taken from a call to stable.age().
+
+bin.width  -- Width of the size class bins, in mm.
+
+rel.abund  -- Used only if method = "well-known": the vector of relative abundances of the size classes defined by bin.width.
+
+...    --  If method = "stable-age", then arguments to stable.age() are supplied here (at a minimum, values for S.juv, S.subad, S.ad and F must be supplied, since they have no defaults). 
+
+
+VALUE
+
+A vector of individual burrows' widths (mm).
+
+
+______________________________________________________________________________
+
+stable.age
+
+Returns a vector of relative abundances representing the stable-age distribution of individual tortoises in a population with the supplied survival and fecundity values, population growth rate, and individual growth parameters.  Sex ratio can also be provided.
+ 
+stable.age (S.juv, S.subad, S.ad, F, max.age = 80, lambda = 1, 
+    A.f = 306, k.f = 0.056, A.m = 289, k.m = 0.061, prop.f = 0.5) 
+
+
+ARGUMENTS
+
+###  Population growth parameters  ##################### 
+
+S.juv    -- annual survivial rate of juvenile tortoises.
+
+S.subad  -- annual survivial rate of subadult tortoises.
+
+S.ad     -- annual survivial rate of adult tortoises.
+
+F        -- per capita annual fecundity. 
+
+max.age  -- maximum individual lifespan.
+
+lambda   -- population growth rate.
+
+prop.f   -- sex ratio, expressed as proportion female.
+
+
+###  Individual growth parameters  ##################### taken from Tuberville et al. 
+
+A.f      -- maximum theoretical size of females. 
+
+k.f      -- growth rate parameter, females.
+
+A.m      -- maximum theoretical size of males. 
+
+k.m      -- growth rate parameter, males.
+
+########################################################
+
+
+DETAILS
+
+Relies on a Leslie matrix that includes both sexes.
+
+Note that only certain combinations of the function arguments result in a valid Leslie matrix.  An error is thrown if a workable matrix can't be produced: "Whoops, S1.calc = xxx!"  Here, S1.calc is the hatchling survival rate implied by the values supplied to the function -- it must be between 0 and 1!  SPECIAL NOTE:  When attempting to call stable.age() from ind.sz.lst() by setting method="stable-age", the aforementioned error message does not propagate to the stdout.  Instead, the error is described this way: "Error: class(lst) == "age.lst" is not TRUE".
+
+
+
+VALUE
+
+An object of class "age.lst" containing the following elements:
+
+stable.age          --  the population's stable age distribution, that is, the relative abundances in the year classes, once these have equillibrated.
+
+
+A.f, A.m, k.f, k.m  --  just the values that were passed to the function.
+
+subadult.f          --  calculated age that females reach subadult size.
+
+maturity.f          --  calculated age that females reach adult size.
+
+subadult.m          --  calculated age that males reach subadult size.
+
+maturity.m          --  calculated age that males reach adult size.
+
+
