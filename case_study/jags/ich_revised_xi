@@ -1,0 +1,92 @@
+##  JAGS model, to analyze the pre-post-burn data from Ichauway, collected Spring 2016.
+##
+##
+##  24 Jul 2017
+#####################################
+
+data {  
+  p.vals.dim <- dim(p.vals)
+  y.dim <- dim(y)
+}
+  
+model {
+
+##  parameters of xi, the scaling factor for detection function:
+
+
+  sigma ~ dunif(0, 100)
+#  xi.int.sc ~ dunif(0,1)
+#  xi.brk.sc.inv ~ dunif(0,1)
+#  xi.brk.sc <- 1/xi.brk.sc.inv
+  
+#  xi.int[2] ~ dunif(0,1)
+#  xi.break[2] ~ dunif(5,max.diam[2])  #  
+#  
+#  xi.int[1] <- xi.int.sc * xi.int[2]
+#  xi.break[1] <- xi.brk.sc * xi.break[2]
+#  
+##  Calculate xi stuff, for Pre- and Post-burn:
+for ( i in 1:y.dim[2]) {
+  xi.5[i] ~ dunif(0,max.xi.5)
+  xi.break[i] ~ dunif(min.xi.brk,max.diam[y.dim[2]])
+  xi.beta[i] <- (1 - xi.5[i])/(xi.break[i] - 5)
+}
+
+
+##  Data augmentation:
+psi ~ dunif(0,1)
+
+burr.pi ~ ddirch(burr.near)
+
+
+for (i in 1:y.dim[1]) {             ##  y.dim[1] = number of observed + augmented burrows
+                  
+  w[i] ~ dbern(psi)
+
+  dist[i] ~ dunif(0, Bx[y.dim[2]])   ##  take Bx, the outer limit of the surveyed area (strip-width), from 1) the pre-burn survey whn analyzing only the pre-burn data; 2) the post-burn survey, in the joint analysis (the value is very nearly equal for both, in fact)
+
+  diam.bin[i] ~ dcat(burr.pi)
+
+##  In this case:
+#h$breaks
+# [1]  5 10 15 20 25 30 35 40 45 50 55
+
+  dL[i] <- 5 * diam.bin[i]    ##  lower limit of possible diameter of burrow i
+  
+  
+  #####  SEEMS LIKE the problem with this mehotd is that the fouind burrows are updating... well, I don't know: I relly thought just doing "diam.bin[i] ~ dcat(burr.near)" should've been all I needed.  I guess I really need to figure out why unobserved burrows are getting stuck at 35 cm....
+  diam[i] ~ dunif(dL[i], dL[i] + 5)
+
+for (j in 1:y.dim[2]) {
+    xi[i,j] <- ifelse(diam[i] < xi.break[j],
+                    xi.5[j] + xi.beta[j]*(diam[i]-5),
+                    1)
+
+    p[i,j] <- xi[i,j] * exp(-((dist[i]^2)/(2*sigma^2)))    ##  the half-normal detection function, scaled by xi.
+
+    mu[i,j] <- w[i] * p[i,j]
+    y[i,j] ~ dbern(mu[i,j])
+  }
+
+#  p[i,2] <- xi[i,2] * exp(-((dist[i]^2)/(2*sigma^2)))    ##  the half-normal detection function, scaled by xi.    
+#  p[i,1] <- xi[i,1] * exp(-((dist[i]^2)/(2*sigma^2)))
+
+}
+
+###  Derived:
+N <- sum(w)
+D <- N*(10000/(2*Bx[y.dim[2]]*surv.len))  # burrows per hectare
+
+###  Predicted values, for plotting out the detection curves:
+for (i in 1:p.vals.dim[1]) {
+  for (j in 1:y.dim[2]) {
+    xi.pred[i,j] <- ifelse(p.vals[i,1] < xi.break[j],
+                         xi.5[j] + xi.beta[j]*(p.vals[i,1] - 5),     ##  p.vals[,1] is the diameter column
+                    1)
+                                       
+    p.pred[i,j] <- xi.pred[i,j] * exp(-((p.vals[i,2]^2)/(2*sigma^2)))   ##  p.vals[,2] is the distance column
+  
+  }
+}
+
+}

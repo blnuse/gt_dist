@@ -1,0 +1,301 @@
+##  R script for pre/post burn surveys at Ichauway, Spring 2016.
+##
+##
+##  Oct 2019
+############################################
+
+source('/home/nuse/Projects/GT_stuff/distance/Ichauway_pre_post_burn/R/revised_oct2019/Ich_script_oct2019_dat_&_fun')
+
+#save("dat.near", "pre.lst", "pre.near", "pre.nrPst", "runfun", file = "/home/nuse/Projects/GT_stuff/distance/Ichauway_pre_post_burn/R/revised_oct2019/tmp_dat.R") 
+
+load("/home/nuse/Projects/GT_stuff/distance/Ichauway_pre_post_burn/R/revised_oct2019/tmp_dat.R")
+
+setwd("/home/nuse/Projects/GT_stuff/distance/Ichauway_pre_post_burn")
+
+###  Here are the model/data combinations from the Table in the MS:
+#both_Int
+#both_IntSc (intercept- and scale-varying)
+#pre_Int_30 (xi_brk > 30 and xi_int < 0.5)
+#pre_Int
+#pre_IntSc
+#pre_Conv
+
+#Also add a run on the Pre data, but using the burrow width distribution (within 5m of the line) from the Post survey!  This to be compared with pre_Int30 above.
+
+dat.near$diam.bin <- sample.int(size = dat.near$M, n = length(dat.near$burr.near), prob = dat.near$burr.near, replace = T)
+pre.lst$diam.bin <- sample.int(size = pre.lst$M, n = length(pre.lst$diam.hist), prob = pre.lst$diam.hist, replace = T)
+pre.near$diam.bin <- sample.int(size = pre.near$M, n = length(pre.near$burr.near), prob = pre.near$burr.near, replace = T)
+pre.nrPst$diam.bin <- sample.int(size = pre.nrPst$M, n = length(pre.nrPst$burr.near), prob = pre.nrPst$burr.near, replace = T)
+
+
+##  There are going to be a number of models fit here -- re-runs 29 jul 2019!
+##  All results files in: /home/nuse/Projects/GT_stuff/distance/Ichauway_pre_post_burn/output/sep/oct2019/
+
+##############################################################################################################
+##############################################################################################################
+# 1.  Model:  "both_Int"
+
+outp <- runfun(modl = "ich_revised_xi",
+               name.suffix = "jnt",
+               datl = dat.near,
+               initl = list(w = dat.near$y.or),
+               iter.samp = 5000,
+               min.xi.brk = 5,
+               max.xi.5 = 1,
+               vars = c("xi.5",
+                  "xi.break",
+                  "xi.beta",
+#                  "tau.int",
+#                  "tau.break",
+#                  "tau.beta",
+                  "sigma",
+#                  "deviance",
+                  "D", "p.pred"),
+               pre = T,
+               post = T)
+
+##############################################################################################################
+##############################################################################################################
+# 2.  Model:  "pre_Int"
+
+outp <- runfun(modl = "ich_revised_xi",
+               name.suffix = "pre",
+               datl = pre.near,
+               initl = list(w = drop(pre.near$y)),
+               iter.samp = 5000,
+               min.xi.brk = 5,
+               max.xi.5 = 1,
+               vars = c("xi.5",
+                  "xi.break",
+                  "xi.beta",
+                  "sigma",
+                  "D",
+                  "p.pred"),
+               pre = T,
+               post = F)
+
+
+####  A test---
+#outp2 <- runfun(modl = "ich_revised_xi",
+#               name.suffix = "preTest2",
+#               datl = pre.near,
+#               initl = list(w = drop(pre.near$y)),
+#               iter.samp = 5000,
+#               min.xi.brk = 5,
+#               max.xi.5 = 1,
+#               vars = c("xi.5",
+#                  "xi.break",
+#                  "xi.beta",
+#                  "sigma",
+#                  "D",
+#                  "p.pred",
+#                  "dist",
+#                  "diam.bin"),
+#               pre = T,
+#               post = F)
+
+
+               
+#                  paste0("dist[", pre.near$n.obs+0:3, "]"),
+#                  paste0("diam.bin[", pre.near$n.obs+0:3, "]"),
+#                  paste0("dL[", pre.near$n.obs+0:3, "]"),
+#                  paste0("diam[", pre.near$n.obs+0:3, "]"),
+#                  paste0("xi[", pre.near$n.obs+0:3, ",1]"),
+#                  paste0("p[", pre.near$n.obs+0:3, ",1]")
+#                  
+##############################################################################################################
+##############################################################################################################
+# 3.  Model:  "pre_Int30"
+outp <- runfun(modl = "ich_revised_xi",
+               name.suffix = "preXi30",
+               datl = pre.near,
+               initl = list(w = drop(pre.near$y)),
+               iter.samp = 5000,
+               min.xi.brk = 30,
+               max.xi.5 = 0.5,
+               vars = c("xi.5",
+                  "xi.break",
+                  "xi.beta",
+                  "sigma",
+                  "D", "p.pred"),
+               pre = T,
+               post = F)
+
+##############################################################################################################
+##############################################################################################################
+# 4.  Model:  "pre_Int_nrPst" :  leave `min.xi.brk` and `max.xi.5` free, but use the burrow width distribution from `dat.near`, i.e., from the Post dataset (within 5m)!!
+
+outp <- runfun(modl = "ich_revised_xi",
+               name.suffix = "preNrPst",
+               datl = pre.nrPst,
+               initl = list(w = drop(pre.nrPst$y)),
+               iter.samp = 5000,
+               min.xi.brk = 5,
+               max.xi.5 = 1,
+               vars = c("xi.5",
+                  "xi.break",
+                  "xi.beta",
+                  "sigma",
+                  "D", "p.pred"),
+               pre = T,
+               post = F)
+ 
+##############################################################################################################
+##############################################################################################################
+#5.  pre_IntSc
+outp <- runfun(modl = "ich_revised_tau",
+               name.suffix = "preTau",
+               datl = pre.near,
+               initl = list(w = drop(pre.near$y)),
+               iter.samp = 5000,
+               min.xi.brk = 5,
+               max.xi.5 = 1,
+               vars = c("xi.5",
+                  "xi.break",
+                  "xi.beta",
+                  "tau.5",
+                  "tau.break",
+                  "tau.beta",
+                  "sigma",
+#                  "deviance",
+                  "D", "p.pred"),
+               pre = T,
+               post = F)
+
+
+#modl = "ich_revised_tau"
+#               name.suffix = "preTau"
+#               datl = pre.near
+#               initl = list(w = drop(pre.near$y))
+#               iter.samp = 5000
+#               min.xi.brk = 5
+#               max.xi.5 = 1
+#               vars = c("xi.5",
+#                  "xi.break",
+#                  "xi.beta",
+#                  "tau.5",
+#                  "tau.break",
+#                  "tau.beta",
+#                  "sigma",
+##                  "deviance",
+#                  "D", "p.pred")
+#               pre = T
+#               post = F
+#               
+
+##############################################################################################################
+##############################################################################################################
+# 6.  Model:  "both_Int"
+outp <- runfun(modl = "ich_revised_tau",
+               name.suffix = "jntTau",
+               datl = dat.near,
+               initl = list(w = dat.near$y.or),
+               iter.samp = 5000,
+               min.xi.brk = 5,
+               max.xi.5 = 1,
+               vars = c("xi.5",
+                  "xi.break",
+                  "xi.beta",
+                  "tau.5",
+                  "tau.break",
+                  "tau.beta",
+                  "sigma",
+#                  "deviance",
+                  "D", "p.pred"),
+               pre = T,
+               post = T)
+               
+               
+
+
+##############################################################################################################
+##############################################################################################################
+#7.  pre_Conv
+outp <- runfun(modl = "ich_pre_conv",
+               name.suffix = "preConv",
+               datl = pre.lst,
+               initl = list(w = drop(pre.lst$y)),
+               iter.samp = 5000,
+               min.xi.brk = 5,
+               max.xi.5 = 1,
+               vars = c("sigma",
+#                  "deviance",
+                  "D", "p.pred"),
+               pre = T,
+               post = F)
+               
+
+##############################################################################################################
+##############################################################################################################
+#8.  pre_nr_Conv
+outp <- runfun(modl = "ich_pre_conv",
+               name.suffix = "near",
+               datl = pre.near,
+               initl = list(w = drop(pre.near$y)),
+               iter.samp = 5000,
+               min.xi.brk = 5,
+               max.xi.5 = 1,
+               vars = c("sigma",
+#                  "deviance",
+                  "D", "p.pred"),
+               pre = T,
+               post = F)
+               
+  
+
+
+##############################################################################################################
+##############################################################################################################
+## LEFT OFF HERE
+## LEFT OFF HERE
+## LEFT OFF HERE
+## LEFT OFF HERE
+## LEFT OFF HERE
+
+want <- names(pre.near)[names(pre.near) != "diam.bin"]
+pre.test <- c(pre.near[want], cert = 100)
+
+  ####  To tet 'DirchTest'....
+  outp <- runfun(modl = "ich_dirchTest_xi",
+               name.suffix = "2",
+               datl = pre.test,
+               initl = list(w = drop(pre.test$y)),
+               iter.samp = 5000,
+               min.xi.brk = 5,
+               max.xi.5 = 1,
+               vars = c("sigma",
+#                  "deviance",
+                  "D", "p.pred",
+                  "psi",
+                  "burr.pi",
+                  paste0("dist[", pre.near$n.obs+0:3, "]"),
+                  paste0("diam.bin[", pre.near$n.obs+0:3, "]"),
+#                  paste0("dL[", pre.near$n.obs+0:3, "]"),
+                  paste0("diam[", pre.near$n.obs+0:3, "]"),
+                  paste0("xi[", pre.near$n.obs+0:3, ",1]"),
+                  paste0("p[", pre.near$n.obs+0:3, ",1]")),
+               pre = T,
+               post = F)    
+               
+               
+               modl = "ich_dirchTest_xi"
+               name.suffix = "2"
+               datl = pre.test
+               initl = list(w = drop(pre.test$y))
+               iter.samp = 5000
+               min.xi.brk = 5
+               max.xi.5 = 1
+               vars = c("sigma",
+#                  "deviance",
+                  "D", "p.pred",
+                  "psi",
+                  "burr.pi",
+                  paste0("dist[", pre.test$n.obs+0:3, "]"),
+                  paste0("diam.bin[", pre.test$n.obs+0:3, "]"),
+#                  paste0("dL[", pre.near$n.obs+0:3, "]"),
+                  paste0("diam[", pre.test$n.obs+0:3, "]"),
+                  paste0("xi[", pre.test$n.obs+0:3, ",1]"),
+                  paste0("p[", pre.test$n.obs+0:3, ",1]"))
+               pre = T
+               post = F
+                        

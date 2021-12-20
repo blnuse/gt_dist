@@ -1,0 +1,189 @@
+##  Ichauway pre- and post-burn surveys: collect modeling results
+##
+##
+##  01 Aug 2017
+##############################################
+
+library(rjags)
+
+setwd("/home/nuse/Projects/GT_stuff/distance/Ichauway_pre_post_burn/output/current")
+
+f <- list.files()
+n <- gsub(f, pattern = "\\.R", replace = "")
+
+xi.5.pre.l <- xi.5.pre.med <- xi.5.pre.u <- xi.5.post.l <- xi.5.post.med <- xi.5.post.u <- xi.brk.pre.l <- xi.brk.pre.med <- xi.brk.pre.u <- xi.brk.post.l <- xi.brk.post.med <- xi.brk.post.u <- sigma.l <- sigma.med <- sigma.u <- D.l <- D.med <- D.u <- rep(NA, length(f))
+    
+for ( i in 1:length(f)) {
+  load(f[i])
+  s <- summary(out)
+  q <- s$quantiles
+  q.nm <- rownames(q)
+  
+  if (grepl(f[i], pattern = "jnt")) {
+
+    xi.5.pre.l[i] <- q[grep(q.nm, pattern = "xi\\.5\\[1\\]"),1]
+    xi.5.pre.med[i] <- q[grep(q.nm, pattern = "xi\\.5\\[1\\]"),3]
+    xi.5.pre.u[i] <- q[grep(q.nm, pattern = "xi\\.5\\[1\\]"),5]
+
+    xi.5.post.l[i] <- q[grep(q.nm, pattern = "xi\\.5\\[2\\]"),1]
+    xi.5.post.med[i] <- q[grep(q.nm, pattern = "xi\\.5\\[2\\]"),3]
+    xi.5.post.u[i] <- q[grep(q.nm, pattern = "xi\\.5\\[2\\]"),5]
+
+    xi.brk.pre.l[i] <- q[grep(q.nm, pattern = "xi\\.break\\[1\\]"),1]
+    xi.brk.pre.med[i] <- q[grep(q.nm, pattern = "xi\\.break\\[1\\]"),3]
+    xi.brk.pre.u[i] <- q[grep(q.nm, pattern = "xi\\.break\\[1\\]"),5]
+
+    xi.brk.post.l[i] <- q[grep(q.nm, pattern = "xi\\.break\\[2\\]"),1]
+    xi.brk.post.med[i] <- q[grep(q.nm, pattern = "xi\\.break\\[2\\]"),3]
+    xi.brk.post.u[i] <- q[grep(q.nm, pattern = "xi\\.break\\[2\\]"),5]
+  }
+
+  if (grepl(f[i], pattern = "pre") && !grepl(f[i], pattern = "Conv")) {
+
+    xi.5.pre.l[i] <- q[grep(q.nm, pattern = "xi\\.5$"),1]
+    xi.5.pre.med[i] <- q[grep(q.nm, pattern = "xi\\.5$"),3]
+    xi.5.pre.u[i] <- q[grep(q.nm, pattern = "xi\\.5$"),5]
+    
+    xi.brk.pre.l[i] <- q[grep(q.nm, pattern = "xi\\.break$"),1]
+    xi.brk.pre.med[i] <- q[grep(q.nm, pattern = "xi\\.break$"),3]
+    xi.brk.pre.u[i] <- q[grep(q.nm, pattern = "xi\\.break$"),5]
+    
+  }
+  
+#  if (grepl(f[i], pattern = "^post") && !grepl(f[i], pattern = "noXi")) {
+#    xi.5.post.l[i] <- q[grep(q.nm, pattern = "xi\\.5$"),1]
+#    xi.5.post.med[i] <- q[grep(q.nm, pattern = "xi\\.5$"),3]
+#    xi.5.post.u[i] <- q[grep(q.nm, pattern = "xi\\.5$"),5]
+#    
+#    xi.brk.post.l[i] <- q[grep(q.nm, pattern = "xi\\.break$"),1]
+#    xi.brk.post.med[i] <- q[grep(q.nm, pattern = "xi\\.break$"),3]
+#    xi.brk.post.u[i] <- q[grep(q.nm, pattern = "xi\\.break$"),5]
+#  }
+#  
+  sigma.l[i] <- q[grep(q.nm, pattern = "sigma$"),1]
+  sigma.med[i] <- q[grep(q.nm, pattern = "sigma$"),3]
+  sigma.u[i] <- q[grep(q.nm, pattern = "sigma$"),5]
+    
+  D.l[i] <- q[grep(q.nm, pattern = "D$"),1]
+  D.med[i] <- q[grep(q.nm, pattern = "D$"),3]
+  D.u[i] <- q[grep(q.nm, pattern = "D$"),5]
+  
+}
+
+df <- round(data.frame(xi.5.pre.l, xi.5.pre.med, xi.5.pre.u, xi.5.post.l, xi.5.post.med, xi.5.post.u, xi.brk.pre.l, xi.brk.pre.med, xi.brk.pre.u, xi.brk.post.l, xi.brk.post.med, xi.brk.post.u, sigma.l, sigma.med, sigma.u, D.l, D.med, D.u),2)
+
+df <- data.frame(name = n, df)
+
+df.pretty <- with(df, data.frame(name,
+                                xi.5.pre = paste0(xi.5.pre.med, " (", xi.5.pre.l, ", ", xi.5.pre.u, ")"),
+                                xi.5.post = paste0(xi.5.post.med, " (", xi.5.post.l, ", ", xi.5.post.u, ")"),
+                                xi.brk.pre = paste0(xi.brk.pre.med, " (", xi.brk.pre.l, ", ", xi.brk.pre.u, ")"),
+                                xi.brk.post = paste0(xi.brk.post.med, " (", xi.brk.post.l, ", ", xi.brk.post.u, ")"),
+                                sigma = paste0(sigma.med, " (", sigma.l, ", ", sigma.u, ")"),
+                                D = paste0(D.med, " (", D.l, ", ", D.u, ")")))
+
+library(xtable)
+
+xtable(df.pretty)
+
+% latex table generated in R 3.3.3 by xtable 1.8-2 package
+% Wed Aug  2 15:19:03 2017
+\begin{table}[ht]
+\centering
+\begin{tabular}{rlllllll}
+  \hline
+ & name & xi.5.pre & xi.5.post & xi.brk.pre & xi.brk.post & sigma & N \\ 
+  \hline
+1 & both\_sameSigma\_xiFree\_pRat\_nearBurr & 0.19 (0.04, 0.35) & 0.96 (0.26, 1) & 56.53 (55.06, 61.17) & 27.63 (5.74, 51.68) & 17 (15.18, 19.47) & 581 (536, 632) \\ 
+  2 & both\_sameSigma\_xiFree\_pRat & 0.19 (0.04, 0.34) & 0.79 (0.21, 0.99) & 56.74 (55.11, 64.16) & 22.12 (8.22, 51.07) & 16.99 (15.18, 19.5) & 588 (541, 651) \\ 
+  3 & both\_sameSigma\_xiFree\_tauFree\_pRat\_nearBurr & 0.2 (0.04, 0.37) & 0.72 (0.13, 1) & 56.55 (55.04, 61.55) & 7.99 (5.22, 52.11) & 17.19 (15.26, 19.9) & 577 (533, 630) \\ 
+  4 & both\_sameSigma\_xiFree\_tauFree\_pRat & 0.23 (0.06, 0.4) & 0.84 (0.23, 0.99) & 56.82 (55.1, 63.5) & 16.44 (5.97, 48.92) & 17.87 (15.51, 22.2) & 586 (537, 643) \\ 
+  5 & post\_noXi & NA (NA, NA) & NA (NA, NA) & NA (NA, NA) & NA (NA, NA) & 16.27 (14.11, 19.77) & 594 (534, 660.02) \\ 
+  6 & post\_xi\_tau & NA (NA, NA) & 0.84 (0.07, 0.99) & NA (NA, NA) & 13.43 (5.25, 50.92) & 17.56 (14.73, 21.58) & 602 (544, 672) \\ 
+  7 & post\_xi & NA (NA, NA) & 0.8 (0.1, 0.99) & NA (NA, NA) & 19.53 (5.49, 51.43) & 16.3 (14.18, 19.74) & 601 (539, 675) \\ 
+  8 & pre\_noXi & NA (NA, NA) & NA (NA, NA) & NA (NA, NA) & NA (NA, NA) & 11.74 (10.38, 13.35) & 435 (386.98, 500) \\ 
+  9 & pre\_xi\_tau & 0.59 (0.04, 0.98) & NA (NA, NA) & 22.21 (5.73, 50.82) & NA (NA, NA) & 11.93 (10.5, 14.39) & 445 (384, 522.03) \\ 
+  10 & pre\_Xi & 0.59 (0.05, 0.98) & NA (NA, NA) & 25.7 (5.88, 51.5) & NA (NA, NA) & 11.69 (10.37, 13.51) & 446 (388, 538.03) \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+#######################################################
+#######################################################
+
+
+make.plots <- function() {
+  require(rjags)
+  f <- list.files()
+  n <- gsub(f, pattern = "\\.R", replace = "")
+   
+for ( j in 1:length(f)) {
+  load(f[j])
+  s <- summary(samp)
+  q <- s$quantiles
+  q.nm <- rownames(q)
+  
+  single <- !any(grepl(q.nm, pattern = "p.pred\\[[0-9]{1,2},[0-9]\\]"))
+  if ( single ) {
+    if (grepl(n[j], pattern = "pre")) {
+      pre <- T; post <- F
+      } else {
+      pre <- F; post <- T
+      }
+  } else {
+    pre <- post <- T
+  }
+    
+  if (pre && !post) { p.pre <- s$quantiles[grep(x = rownames(s$quantiles), pattern = "p.pred", fixed = T), c(1,3,5)] }
+  if (post && !pre) { p.post <- s$quantiles[grep(x = rownames(s$quantiles), pattern = "p.pred", fixed = T), c(1,3,5)] }
+  if (pre && post) {
+    p.pre <- s$quantiles[grep(x = rownames(s$quantiles), pattern = "p\\.pred\\[[0-9]{1,2},1\\]", fixed = F), c(1,3,5)]
+    p.post <- s$quantiles[grep(x = rownames(s$quantiles), pattern = "p\\.pred\\[[0-9]{1,2},2\\]", fixed = F), c(1,3,5)]
+  }
+  if (!pre && !post) { stop("Whoops!") }
+  
+  
+png(file=paste0("/home/nuse/Projects/GT_stuff/distance/Ichauway_pre_post_burn/figs/sep/", n[j], ".png"), res=300, height = 7, width = 10, units="in")
+par(mfrow = c(2,2))
+
+  lg <- rgb(t(col2rgb("lightgrey")/255), alpha = 0.5)
+  lc <- rgb(t(col2rgb("lightcyan2")/255), alpha = 0.5)
+    
+for (i in 1:4) { 
+
+with(datl,
+  { tst <- p.vals[,1] == 10*i
+
+    if (pre) { poly.pre <- cbind(c(p.vals[tst,2], rev(p.vals[tst,2])), c(p.pre[tst,1], rev(p.pre[tst,3]))) } 
+    if (post) { poly.post <- cbind(c(p.vals[tst,2], rev(p.vals[tst,2])), c(p.post[tst,1], rev(p.post[tst,3]))) }
+
+    if (pre) { plot(p.vals[tst,2], p.pre[tst,2], ylim = c(0,1), type="n", main = paste(10*i, "cm diameter"), ylab = "Detection probability", xlab = "Distance (m)")
+    } else {
+      plot(p.vals[tst,2], p.post[tst,2], ylim = c(0,1), type="n", main = paste(10*i, "cm diameter"), ylab = "Detection probability", xlab = "Distance (m)")
+    }
+    
+    if (pre) { polygon(poly.pre, col = lg, border = NA) }
+    if (post) { polygon(poly.post, col = lc, border = NA) }
+  
+    if (pre) { lines(p.vals[tst,2], p.pre[tst,2], col = "black") }
+    if (post) { lines(p.vals[tst,2], p.post[tst,2], col = "blue") }
+  })
+      
+  if (i == 4) {
+    l <- legend(x = 0.5, y = 0.05, yjust = 0, lty = 1, legend = c("Pre-burn", "Post-burn"), plot = F)
+    if (pre) { leg.poly.pre <- cbind(l$text$x[1] + c(-0.3, -0.1, -0.1, -0.3)*l$rect$w,
+                          l$text$y[1] + c(0.1, 0.1, -0.1, -0.1)*l$rect$h)
+               polygon(leg.poly.pre, col = lg, border = NA) }
+    if (post) { leg.poly.post <- cbind(l$text$x[2] + c(-0.3, -0.1, -0.1, -0.3)*l$rect$w, l$text$y[2] + c(0.1, 0.1, -0.1, -0.1)*l$rect$h)
+                polygon(leg.poly.post, col = lc, border = NA) }
+
+    legend(x = 0.5, y = 0.05, yjust = 0, lty = 1, col = c("black", "blue"), legend = c("Pre-burn", "Post-burn"), bg = NULL)
+  }
+}
+
+dev.off()
+
+}
+}
+
+
