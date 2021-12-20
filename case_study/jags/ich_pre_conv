@@ -11,25 +11,10 @@ data {
   
 model {
 
-##  parameters of xi, the scaling factor for detection function:
-
-
-  sigma ~ dunif(0, 100)
-#  xi.int.sc ~ dunif(0,1)
-#  xi.brk.sc.inv ~ dunif(0,1)
-#  xi.brk.sc <- 1/xi.brk.sc.inv
-  
-#  xi.int[2] ~ dunif(0,1)
-#  xi.break[2] ~ dunif(5,max.diam[2])  #  
-#  
-#  xi.int[1] <- xi.int.sc * xi.int[2]
-#  xi.break[1] <- xi.brk.sc * xi.break[2]
-#  
+sigma ~ dunif(0, 100)
 
 ##  Data augmentation:
 psi ~ dunif(0,1)
-
-#burr.pi ~ ddirch(burr.near)
 
 
 for (i in 1:y.dim[1]) {             ##  y.dim[1] = number of observed + augmented burrows
@@ -38,27 +23,18 @@ for (i in 1:y.dim[1]) {             ##  y.dim[1] = number of observed + augmente
 
   dist[i] ~ dunif(0, Bx[y.dim[2]])   ##  take Bx, the outer limit of the surveyed area (strip-width), from 1) the pre-burn survey whn analyzing only the pre-burn data; 2) the post-burn survey, in the joint analysis (the value is very nearly equal for both, in fact)
 
-
-#  diam.bin[i] ~ dcat(burr.near)
-
-##  In this case:
-#h$breaks
-# [1]  5 10 15 20 25 30 35 40 45 50 55
-
   dL[i] <- 5 * diam.bin[i]    ##  lower limit of possible diameter of burrow i
   
+  ##  Choose diameter of burrow i (only used for augmented burrows, since `diam` has values coming in as data for observed burrows (NA for augmented burrows).
   diam[i] ~ dunif(dL[i], dL[i] + 5)
 
 for (j in 1:y.dim[2]) {
 
-    p[i,j] <- exp(-((dist[i]^2)/(2*sigma^2)))    ##  the half-normal detection function, straight up.
+    p[i,j] <- exp(-((dist[i]^2)/(2*sigma^2)))    ##  the half-normal detection function, with no adjustment.
 
     mu[i,j] <- w[i] * p[i,j]
     y[i,j] ~ dbern(mu[i,j])
   }
-
-#  p[i,2] <- xi[i,2] * exp(-((dist[i]^2)/(2*sigma^2)))    ##  the half-normal detection function, scaled by xi.    
-#  p[i,1] <- xi[i,1] * exp(-((dist[i]^2)/(2*sigma^2)))
 
 }
 

@@ -1,12 +1,19 @@
-##  Ichauway pre- and post-burn surveys: collect modeling results
+##  Ichauway pre- and post-burn surveys: collect modeling results; make summary Latex table; make figures.
 ##
 ##
-##  01 Aug 2017
+##  01 Aug 2017; Nov 2019; Dec 2021.
 ##############################################
+
+##  To use this script:
+##  Fist set working directory to the one containing the folders 'case_study' and 'simulations'.  All paths here are relative to that directory.
+
+##  Requires two R packages: {rjags} and {xtable} (the latter is only necessary to make a LaTex definition for the results summary table. 
+
+
 
 library(rjags)
 
-setwd("/home/nuse/Projects/GT_stuff/distance/Ichauway_pre_post_burn/output/current")
+setwd("case_study/output")
 
 f <- list.files()
 n <- gsub(f, pattern = "\\.R", replace = "")
@@ -50,16 +57,6 @@ for ( i in 1:length(f)) {
     
   }
   
-#  if (grepl(f[i], pattern = "^post") && !grepl(f[i], pattern = "noXi")) {
-#    xi.5.post.l[i] <- q[grep(q.nm, pattern = "xi\\.5$"),1]
-#    xi.5.post.med[i] <- q[grep(q.nm, pattern = "xi\\.5$"),3]
-#    xi.5.post.u[i] <- q[grep(q.nm, pattern = "xi\\.5$"),5]
-#    
-#    xi.brk.post.l[i] <- q[grep(q.nm, pattern = "xi\\.break$"),1]
-#    xi.brk.post.med[i] <- q[grep(q.nm, pattern = "xi\\.break$"),3]
-#    xi.brk.post.u[i] <- q[grep(q.nm, pattern = "xi\\.break$"),5]
-#  }
-#  
   sigma.l[i] <- q[grep(q.nm, pattern = "sigma$"),1]
   sigma.med[i] <- q[grep(q.nm, pattern = "sigma$"),3]
   sigma.u[i] <- q[grep(q.nm, pattern = "sigma$"),5]
@@ -143,7 +140,7 @@ for ( j in 1:length(f)) {
   if (!pre && !post) { stop("Whoops!") }
   
   
-png(file=paste0("/home/nuse/Projects/GT_stuff/distance/Ichauway_pre_post_burn/figs/sep/", n[j], ".png"), res=300, height = 7, width = 10, units="in")
+png(file=paste0("case_study/figs/", n[j], ".png"), res=300, height = 7, width = 10, units="in")
 par(mfrow = c(2,2))
 
   lg <- rgb(t(col2rgb("lightgrey")/255), alpha = 0.5)
