@@ -4,7 +4,7 @@
 ##  15 Dec 2017
 ########################################
 
-###  source('/home/nuse/Projects/GT_stuff/distance/simulations/new_dec2017/new_sim_15dec2017' )
+###  source('simulations/scripts/new_sim_09jul2019.r' )
 
 
 ####  Antecedents:  ###################################
@@ -24,18 +24,7 @@ trans.x <- function (y, trans.num = 1, theta, spacing, y.int) {
 }
 
 
-#S.juv <- 0.7
-#S.subad <- 0.8
-#S.ad <- 0.98
-#F <- 5
-#                    max.age <- 80
-#                    lambda <- 1
-#                    A.f <- 306      ## female
-#                    k.f <- 0.056
-#                    A.m <- 289      ## male
-#                    k.m <- 0.061
-#                    prop.f <- 0.5
-                    
+
 
 ###  generate a very realistic size-class histogram:
 stable.age <- function (S.juv, S.subad, S.ad, F,
@@ -104,7 +93,8 @@ stable.age <- function (S.juv, S.subad, S.ad, F,
     return(out.lst)
 }    
 
-#stable.size <- function(S.jv, S.sa, S.ad, F, mult, bin.width, n.burr.sa = 3, n.burr.ad = 4, ...) {
+
+
 stable.size <- function(mult, bin.width, n.burr.sa = 3, n.burr.ad = 4, ...) {
   
   lst <- stable.age(...)
@@ -173,11 +163,6 @@ ind.sz.lst <- function(mult, method = "well-known", bin.width = 50, rel.abund = 
 
 #ind.sz.lst(mult = 100)
 
-
-###  Questions, from Craig Guyer's data:
-#1. What is the (size-dependent) rate of occupancy, in burrows?  --> actually, may not be able to answer this from his data....
-#2. What is the (size-dependent) relationship of burrow width to carapace length?
-
       ###  calculate xi and tau: x.shift will always be 50 mm, here.
         broken.stick <- function (x, int, brk, slope, sq=FALSE, x.shift = 50) {
          if (is.nan(slope) || slope == 0 || is.infinite(slope)) {
@@ -194,25 +179,6 @@ ind.sz.lst <- function(mult, method = "well-known", bin.width = 50, rel.abund = 
 
 ########################################################               
 ########################################################               
-
-
-
-#----------------------
-# Lay out transects:
-
-#edge = 1000
-#               n.burr = NULL        ##  true number of burrows
-#               intrvl = 100         ##  distance between transects
-#               theta = 50       ##  angle of transects
-#               sigma = 30
-#               xi.50 = 1
-#               xi.brk = 50        
-#               xi.sq = FALSE
-#               tau.50 = 1
-#               tau.brk = 50               
-#               tau.sq = FALSE
-
-
 
 
 burrSim <- function (
@@ -323,11 +289,6 @@ burrSim <- function (
         
         under.Bx <- corn.mat < Bx
         which.corn <- apply(under.Bx, MAR=2, FUN=which)
-        ####  LEFT OFF HERE !!!!
-        ####  LEFT OFF HERE !!!!
-                ####  LEFT OFF HERE !!!!
-                        ####  LEFT OFF HERE !!!!
-                                ####  LEFT OFF HERE !!!!
         dist.corn <- apply(corn.mat, MAR = 1, FUN = `<`, Bx)
         
 
@@ -384,8 +345,4 @@ burrSim <- function (
         class(out.lst) <- "burrSim"
         return(out.lst)
 }  ## end sim()
-
-####left off testing sim(), with method="stable-age":
-#tst <- do.call(sim, c(method="stable-age", mult = 100, sigma = 20, intrvl = 100, s))
-#s <- list(S.juv = 0.8, S.subad = 0.85, S.ad = 0.95, F = 4, n.burr = 200)
 
